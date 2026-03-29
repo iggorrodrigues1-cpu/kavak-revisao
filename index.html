@@ -407,10 +407,10 @@ function buscar(){
     g('iMarca').value=r.m; g('iMarca').readOnly=true;
     g('iModelo').value=r.mo; g('iModelo').readOnly=true;
     g('iAno').value=r.a; g('iAno').readOnly=true;
-    g('iKm').value=r.k;
+    g('iKm').value=r[3];
     setTimeout(function(){popMotores(r.m,r.mo,'');},50);
     g('foundTxt').textContent='✓ '+r.m+' '+r.mo+' '+r.a;
-    g('foundDet').textContent='Hub: '+(r.h||'—')+' · '+parseInt(r.k).toLocaleString('pt-BR')+' km · Stock: '+(r.p||q);
+    g('foundDet').textContent='Hub: '+(r.h||'—')+' · '+parseInt(r[3]).toLocaleString('pt-BR')+' km · Stock: '+(r.p||q);
     g('foundBox').className='found-box show';
   } else {
     g('notFoundBox').className='notfound-box show';
