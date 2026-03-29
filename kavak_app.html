@@ -1,0 +1,856 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Kavak — Ordem de Serviço</title>
+<style>
+:root{
+  --red:#E8001D;--dark:#090909;--gray:#141414;--mid:#1E1E1E;--mid2:#252525;
+  --border:#2C2C2C;--border2:#3A3A3A;--text:#EFEFEF;--muted:#666;--muted2:#999;
+  --green:#00C853;--yellow:#FFD600;--blue:#2196F3;--purple:#9C27B0;
+  --ouro:#FFD600;--plat:#C8C8C8;--dia:#7DF9FF;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:'Segoe UI',sans-serif;background:var(--dark);color:var(--text);min-height:100vh;}
+
+/* HEADER */
+.header{background:var(--gray);border-bottom:2px solid var(--border2);padding:0 24px;height:52px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:300;}
+.header-title{font-weight:900;font-size:17px;letter-spacing:4px;text-transform:uppercase;color:var(--text);}
+.hbadge{background:rgba(232,0,29,.12);border:1px solid rgba(232,0,29,.35);color:var(--red);font-size:9px;font-weight:700;letter-spacing:2px;padding:3px 9px;text-transform:uppercase;}
+
+/* MAIN */
+.main{max-width:820px;margin:0 auto;padding:20px 18px 60px;}
+
+/* CARDS */
+.card{background:var(--gray);border:1px solid var(--border);padding:20px;margin-bottom:14px;}
+.card-title{font-size:10px;font-weight:700;letter-spacing:3px;color:var(--red);text-transform:uppercase;margin-bottom:16px;display:flex;align-items:center;gap:8px;}
+.card-title::after{content:'';flex:1;height:1px;background:var(--border);}
+
+/* BUSCA */
+.search-row{display:flex;gap:10px;}
+.search-row input{flex:1;background:var(--mid);border:1px solid var(--border2);color:var(--text);padding:12px 14px;font-size:14px;outline:none;font-family:inherit;letter-spacing:1px;text-transform:uppercase;}
+.search-row input::placeholder{text-transform:none;letter-spacing:0;color:var(--muted);}
+.search-row input:focus{border-color:var(--red);}
+.btn-buscar{padding:12px 20px;background:var(--red);color:#fff;border:none;font-size:13px;font-weight:700;letter-spacing:2px;text-transform:uppercase;cursor:pointer;white-space:nowrap;flex-shrink:0;}
+.btn-buscar:hover{background:#c8001a;}
+.search-hint{font-size:10px;color:var(--muted);margin-top:6px;}
+.found-box{display:none;background:rgba(0,200,83,.07);border:1px solid rgba(0,200,83,.25);padding:10px 14px;margin-top:10px;}
+.found-box.show{display:flex;align-items:center;justify-content:space-between;gap:10px;}
+.found-txt{font-size:13px;color:var(--green);font-weight:600;}
+.found-det{font-size:11px;color:var(--muted2);margin-top:2px;}
+.notfound-box{display:none;background:rgba(232,0,29,.07);border:1px solid rgba(232,0,29,.25);padding:10px 14px;margin-top:10px;font-size:12px;color:#ff6b6b;}
+.notfound-box.show{display:block;}
+
+/* FORM GRID */
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+.fg{display:flex;flex-direction:column;gap:5px;position:relative;}
+.fg.full{grid-column:1/-1;}
+label{font-size:10px;font-weight:600;letter-spacing:1.5px;color:var(--muted);text-transform:uppercase;}
+input,select{background:var(--mid);border:1px solid var(--border2);color:var(--text);padding:10px 12px;font-family:inherit;font-size:13px;outline:none;width:100%;-webkit-appearance:none;}
+input:focus,select:focus{border-color:var(--red);}
+input[readonly]{color:var(--muted2);cursor:default;background:var(--mid2);}
+select option{background:var(--mid2);}
+.field-warn{font-size:10px;color:var(--red);margin-top:3px;display:none;}
+.field-warn.show{display:block;}
+
+/* AUTOCOMPLETE */
+.acw{position:relative;}
+.acl{display:none;position:absolute;top:100%;left:0;right:0;background:#161616;border:1px solid var(--red);z-index:9999;max-height:200px;overflow-y:auto;box-shadow:0 6px 20px rgba(0,0,0,.9);}
+.acl.open{display:block;}
+.aci{padding:9px 12px;font-size:13px;cursor:pointer;border-bottom:1px solid var(--border);color:var(--text);}
+.aci:hover{background:rgba(232,0,29,.2);color:#fff;}
+.aci-s{font-size:10px;color:var(--muted);margin-top:1px;}
+
+/* CHIPS */
+.chips{display:flex;gap:6px;flex-wrap:wrap;}
+.chip{padding:7px 13px;border:1px solid var(--border2);background:var(--mid);color:var(--muted2);font-size:11px;font-weight:700;letter-spacing:1px;cursor:pointer;text-transform:uppercase;user-select:none;transition:all .1s;}
+.chip:hover{border-color:var(--muted);color:var(--text);}
+.chip.on{background:var(--red);border-color:var(--red);color:#fff;}
+
+/* PACOTES */
+.pkgs{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:16px;}
+.pkg{border:2px solid var(--border2);background:var(--mid);padding:13px 10px;cursor:pointer;text-align:center;position:relative;transition:all .15s;}
+.pkg:hover{border-color:var(--muted);}
+.pkg.on-ouro{border-color:var(--ouro);background:rgba(255,214,0,.06);}
+.pkg.on-plat{border-color:var(--plat);background:rgba(200,200,200,.06);}
+.pkg.on-dia{border-color:var(--dia);background:rgba(125,249,255,.06);}
+.pkck{position:absolute;top:6px;right:8px;font-size:13px;display:none;color:var(--green);}
+.pkg.on-ouro .pkck,.pkg.on-plat .pkck,.pkg.on-dia .pkck{display:block;}
+.pkico{font-size:18px;margin-bottom:4px;}
+.pknome{font-weight:800;font-size:14px;letter-spacing:1px;text-transform:uppercase;margin-bottom:5px;}
+.pknome.ouro{color:var(--ouro)}.pknome.plat{color:var(--plat)}.pknome.dia{color:var(--dia)}
+.pkitens{font-size:9px;color:var(--muted);line-height:1.7;text-align:left;}
+.pkitens span{display:block;}
+.pkitens span::before{content:'· ';}
+
+/* BOTÕES */
+.btn-main{display:block;width:100%;padding:15px;background:var(--red);color:#fff;border:none;font-size:17px;font-weight:900;letter-spacing:4px;text-transform:uppercase;cursor:pointer;}
+.btn-main:hover{background:#c8001a;}
+.btn-sec{background:transparent;border:1px solid var(--border2);color:var(--muted2);padding:9px 18px;font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;cursor:pointer;margin-top:12px;transition:all .15s;}
+.btn-sec:hover{border-color:var(--text);color:var(--text);}
+.btn-gerar{display:block;width:100%;padding:14px;background:rgba(0,200,83,.08);color:var(--green);border:2px solid var(--green);font-size:16px;font-weight:900;letter-spacing:3px;text-transform:uppercase;cursor:pointer;margin-top:14px;}
+.btn-gerar:hover{background:rgba(0,200,83,.14);}
+
+/* ERR / LOADING */
+.err{display:none;background:rgba(232,0,29,.08);border:1px solid rgba(232,0,29,.3);padding:12px 16px;margin-bottom:12px;color:var(--red);font-size:12px;font-weight:600;}
+.err.show{display:block;}
+.loading{display:none;padding:30px;text-align:center;margin-bottom:14px;background:var(--gray);border:1px solid var(--border);}
+.loading.show{display:block;}
+.spin{width:30px;height:30px;border:3px solid var(--border2);border-top-color:var(--red);border-radius:50%;animation:rot .7s linear infinite;margin:0 auto 10px;}
+@keyframes rot{to{transform:rotate(360deg);}}
+.ltxt{font-size:11px;letter-spacing:2px;color:var(--muted);text-transform:uppercase;}
+
+/* ETAPA 2 — SELEÇÃO */
+.etapa2{display:none;background:var(--gray);border:1px solid var(--border);border-top:2px solid var(--yellow);margin-bottom:14px;animation:up .3s ease;}
+.etapa2.show{display:block;}
+@keyframes up{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:translateY(0);}}
+.e2h{padding:14px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;}
+.e2ht{font-size:14px;font-weight:800;text-transform:uppercase;letter-spacing:1px;}
+.e2hm{font-size:10px;color:var(--muted);}
+.e2body{padding:18px 20px;}
+.e2sec{margin-bottom:18px;}
+.e2sect{font-size:9px;font-weight:700;letter-spacing:3px;color:var(--muted);text-transform:uppercase;margin-bottom:10px;padding-bottom:6px;border-bottom:1px solid var(--border);}
+.e2hint{font-size:10px;color:var(--muted);margin-bottom:10px;}
+
+/* ITEM CHECK */
+.icl{display:flex;flex-direction:column;gap:7px;}
+.ichk{background:var(--mid);border:1px solid var(--border);border-left:3px solid var(--border);padding:11px 13px;display:flex;align-items:flex-start;gap:10px;transition:all .12s;}
+.ichk.pri-crit{border-left-color:var(--red);}
+.ichk.pri-rec{border-left-color:var(--yellow);}
+.ichk.pri-opt{border-left-color:#555;}
+.ichk.pri-gon{border-left-color:var(--blue);}
+.ichk.st-sim{background:#0c1f0c;border-color:rgba(0,200,83,.3);}
+.ichk.st-nao{background:#1f0c0c;opacity:.5;}
+
+/* Botões ✓ ✗ */
+.ichk-btns{display:flex;flex-direction:column;gap:4px;flex-shrink:0;}
+.ibtn{width:30px;height:30px;border:1px solid var(--border2);background:transparent;display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:900;cursor:pointer;transition:all .1s;color:var(--muted);user-select:none;}
+.ibtn:hover{transform:scale(1.05);}
+.ibtn.sim:hover,.ibtn.sim.on{border-color:var(--green);color:#fff;background:var(--green);}
+.ibtn.nao:hover,.ibtn.nao.on{border-color:var(--red);color:#fff;background:var(--red);}
+
+.ichk-body{flex:1;min-width:0;}
+.ichk-tags{display:flex;gap:5px;flex-wrap:wrap;margin-bottom:4px;align-items:center;}
+.tag{font-size:8px;font-weight:700;letter-spacing:1px;text-transform:uppercase;padding:2px 6px;}
+.tag-crit{background:rgba(232,0,29,.18);color:var(--red);}
+.tag-rec{background:rgba(255,214,0,.12);color:var(--yellow);}
+.tag-opt{background:rgba(100,100,100,.2);color:#777;}
+.tag-srv{background:rgba(33,150,243,.12);color:var(--blue);}
+.tag-peca{background:rgba(255,214,0,.1);color:#ccc;}
+.tag-gon{background:rgba(33,150,243,.12);color:var(--blue);}
+.ichk-nome{font-size:13px;font-weight:700;margin-bottom:2px;}
+.ichk-mot{font-size:11px;color:var(--muted2);line-height:1.4;}
+.ichk-int{font-size:10px;color:#ff5555;font-weight:600;margin-top:2px;}
+
+/* Sub-pergunta */
+.subperg{display:none;margin-top:8px;padding-top:8px;border-top:1px solid var(--border);}
+.subperg.show{display:block;}
+.subperg-q{font-size:10px;color:var(--muted2);letter-spacing:.5px;margin-bottom:6px;}
+.subperg-ops{display:flex;flex-wrap:wrap;gap:5px;}
+.sop{padding:5px 10px;border:1px solid var(--border2);background:var(--mid2);font-size:11px;cursor:pointer;color:var(--muted2);transition:all .1s;user-select:none;}
+.sop:hover{border-color:var(--green);color:var(--green);}
+.sop.on{border-color:var(--green);color:#fff;background:rgba(0,200,83,.25);}
+.subperg-res{font-size:10px;color:var(--green);margin-top:5px;font-weight:600;display:none;}
+.subperg-res.show{display:block;}
+
+/* Extras */
+.extra-wrap{display:flex;flex-direction:column;gap:7px;}
+.extra-row{display:flex;gap:7px;align-items:center;}
+.extra-row input{flex:1;padding:9px 11px;font-size:13px;}
+.extra-row select{width:120px;flex-shrink:0;padding:9px 11px;font-size:12px;}
+.btn-add{border:1px dashed var(--border2);background:transparent;color:var(--muted);padding:9px;font-size:11px;font-weight:700;cursor:pointer;width:100%;margin-top:4px;letter-spacing:1px;text-transform:uppercase;}
+.btn-add:hover{border-color:var(--green);color:var(--green);}
+.btn-rm{background:transparent;border:none;color:var(--muted);font-size:20px;cursor:pointer;padding:0 2px;flex-shrink:0;line-height:1;}
+.btn-rm:hover{color:var(--red);}
+
+/* RESULTADO */
+.rblock{display:none;background:var(--gray);border:1px solid var(--border);border-top:2px solid var(--green);margin-bottom:24px;animation:up .3s ease;}
+.rblock.show{display:block;}
+.rh{padding:16px 20px;border-bottom:1px solid var(--border);display:flex;align-items:flex-start;gap:12px;flex-wrap:wrap;}
+.rveh{font-size:20px;font-weight:900;text-transform:uppercase;letter-spacing:1px;}
+.rmeta{font-size:11px;color:var(--muted);margin-top:2px;}
+.rbadge{margin-left:auto;font-size:11px;font-weight:800;letter-spacing:2px;padding:4px 12px;border:2px solid;text-transform:uppercase;}
+.bo{border-color:var(--ouro);color:var(--ouro);}.bp{border-color:var(--plat);color:var(--plat);}.bd{border-color:var(--dia);color:var(--dia);}
+.rbody{padding:20px;}
+.rsec{margin-bottom:18px;}
+.rsect{font-size:9px;font-weight:700;letter-spacing:3px;color:var(--muted);text-transform:uppercase;margin-bottom:8px;padding-bottom:6px;border-bottom:1px solid var(--border);}
+.pkg-tags{display:flex;flex-wrap:wrap;gap:5px;background:var(--mid);border:1px solid var(--border);padding:10px 14px;margin-bottom:14px;}
+.pkg-tag{font-size:10px;font-weight:700;padding:2px 8px;border:1px solid;}
+.ptag-o{border-color:rgba(255,214,0,.4);color:var(--ouro);}.ptag-p{border-color:rgba(200,200,200,.4);color:var(--plat);}.ptag-d{border-color:rgba(125,249,255,.4);color:var(--dia);}
+.igrid{display:flex;flex-direction:column;gap:7px;}
+.ri{background:var(--mid);border:1px solid var(--border);border-left:3px solid transparent;padding:11px 14px;display:flex;gap:10px;align-items:flex-start;}
+.ri.crit{border-left-color:var(--red);}.ri.rec{border-left-color:var(--yellow);}.ri.opt{border-left-color:#555;}.ri.gon{border-left-color:var(--blue);}.ri.ext{border-left-color:var(--purple);}
+.ri-tags{display:flex;flex-direction:column;gap:3px;flex-shrink:0;padding-top:2px;}
+.rname{font-size:13px;font-weight:700;margin-bottom:2px;}
+.rmotivo{font-size:11px;color:var(--muted2);line-height:1.4;}
+.rint{font-size:10px;color:#ff5555;font-weight:600;margin-top:2px;}
+.vazio{padding:12px;color:var(--muted);font-size:11px;}
+
+@media(max-width:580px){
+  .g2{grid-template-columns:1fr;}.fg.full{grid-column:1;}.pkgs{grid-template-columns:1fr;}
+  .main{padding:12px 10px;}.search-row{flex-direction:column;}.extra-row{flex-direction:column;}
+  .extra-row select{width:100%;}
+}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <span class="header-title">KAVAK</span>
+  <div class="hbadge">Operações</div>
+</div>
+
+<div class="main">
+
+  <!-- BUSCA -->
+  <div class="card">
+    <div class="card-title">Busca por Stock ID ou Placa</div>
+    <div class="search-row">
+      <input id="iStock" type="text" placeholder="Ex: 498143 ou GIP0329..." autocomplete="off"
+        oninput="this.value=this.value.toUpperCase()"
+        onkeydown="if(event.key==='Enter')buscar()">
+      <button class="btn-buscar" onclick="buscar()">BUSCAR</button>
+    </div>
+    <div class="search-hint">Pressione Enter ou clique em Buscar — dados preenchidos automaticamente</div>
+    <div class="found-box" id="foundBox">
+      <div>
+        <div class="found-txt" id="foundTxt"></div>
+        <div class="found-det" id="foundDet"></div>
+      </div>
+    </div>
+    <div class="notfound-box" id="notFoundBox">
+      ⚠ Veículo não encontrado na base. Preencha os dados manualmente.
+    </div>
+  </div>
+
+  <!-- DADOS DO VEÍCULO -->
+  <div class="card">
+    <div class="card-title">Dados do Veículo</div>
+    <div class="g2">
+      <div class="fg">
+        <label>Marca</label>
+        <div class="acw">
+          <input id="iMarca" type="text" placeholder="Digite a marca..." autocomplete="off"
+            oninput="acShow('marca')" onfocus="acShow('marca')"
+            onblur="setTimeout(function(){acHide('marca')},180)">
+          <div class="acl" id="acMarca"></div>
+        </div>
+      </div>
+      <div class="fg">
+        <label>Modelo</label>
+        <div class="acw">
+          <input id="iModelo" type="text" placeholder="Selecione a marca primeiro..." autocomplete="off"
+            oninput="acShow('modelo')" onfocus="acShow('modelo')"
+            onblur="setTimeout(function(){acHide('modelo')},180)">
+          <div class="acl" id="acModelo"></div>
+        </div>
+      </div>
+      <div class="fg">
+        <label>Ano</label>
+        <input id="iAno" type="number" placeholder="ex: 2022" min="1960" max="2026"
+          oninput="validarAno()">
+        <span class="field-warn" id="wAno"></span>
+      </div>
+      <div class="fg">
+        <label>Versão / Motor</label>
+        <select id="iMotor" onchange="autoCombu()">
+          <option value="">Selecione marca e modelo primeiro...</option>
+        </select>
+      </div>
+      <div class="fg">
+        <label>Quilometragem Atual</label>
+        <input id="iKm" type="number" placeholder="ex: 38500">
+      </div>
+      <div class="fg">
+        <label>Combustível</label>
+        <select id="iComb">
+          <option value="">Selecione...</option>
+          <option>Flex (Gasolina/Etanol)</option>
+          <option>Gasolina</option>
+          <option>Diesel</option>
+          <option>Elétrico</option>
+          <option>Híbrido</option>
+          <option>GNV</option>
+        </select>
+      </div>
+      <div class="fg full">
+        <label>Tipo de Uso</label>
+        <div class="chips">
+          <div class="chip" onclick="setUso(this,'Urbano intenso')">Urbano Intenso</div>
+          <div class="chip" onclick="setUso(this,'Estrada')">Estrada</div>
+          <div class="chip" onclick="setUso(this,'Misto')">Misto</div>
+          <div class="chip" onclick="setUso(this,'Off-road')">Off-Road</div>
+          <div class="chip" onclick="setUso(this,'Aplicativo')">Aplicativo</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- PACOTE -->
+  <div class="card">
+    <div class="card-title">Pacote Contratado</div>
+    <div class="pkgs">
+      <div class="pkg" id="pO" onclick="setPkg('ouro')"><div class="pkck">✓</div><div class="pkico">🥇</div><div class="pknome ouro">Ouro</div><div class="pkitens"><span>Óleo do motor</span><span>Filtro de óleo</span><span>Filtro de combustível</span></div></div>
+      <div class="pkg" id="pP" onclick="setPkg('plat')"><div class="pkck">✓</div><div class="pkico">💎</div><div class="pknome plat">Platinum</div><div class="pkitens"><span>Óleo do motor</span><span>Filtro de óleo</span><span>Filtro de combustível</span><span>Filtro de ar</span><span>Filtro de cabine</span><span>Higienizador A/C</span></div></div>
+      <div class="pkg" id="pD" onclick="setPkg('dia')"><div class="pkck">✓</div><div class="pkico">💠</div><div class="pknome dia">Diamante</div><div class="pkitens"><span>Óleo do motor</span><span>Filtro de óleo</span><span>Filtro de combustível</span><span>Filtro de ar</span><span>Filtro de cabine</span><span>Higienizador A/C</span><span>Velas de ignição</span></div></div>
+    </div>
+    <button class="btn-main" onclick="analisar()">⚙ GERAR RECOMENDAÇÕES</button>
+  </div>
+
+  <div class="err" id="errEl"></div>
+  <div class="loading" id="loadEl"><div class="spin"></div><div class="ltxt">Processando veículo...</div></div>
+
+  <!-- ETAPA 2 -->
+  <div class="etapa2" id="e2El">
+    <div class="e2h">
+      <div><div class="e2ht">✅ Confirme a Ordem de Serviço</div><div class="e2hm">Clique ✓ para incluir na OS · ✗ para descartar</div></div>
+      <div class="e2hm" id="e2Info"></div>
+    </div>
+    <div class="e2body">
+      <div class="e2sec">
+        <div class="e2sect">Serviços e Peças Recomendados</div>
+        <div class="icl" id="listaItens"></div>
+      </div>
+      <div class="e2sec">
+        <div class="e2sect">Gôndola</div>
+        <div class="icl" id="listaGond"></div>
+      </div>
+      <div class="e2sec">
+        <div class="e2sect">Adicionar Item Extra</div>
+        <div class="extra-wrap" id="extraWrap"></div>
+        <button class="btn-add" onclick="addExtra()">+ Adicionar item extra</button>
+      </div>
+      <button class="btn-gerar" onclick="finalizar()">📄 GERAR ORDEM DE SERVIÇO</button>
+    </div>
+  </div>
+
+  <!-- OS FINAL -->
+  <div class="rblock" id="rEl">
+    <div class="rh">
+      <div><div class="rveh" id="rVeh"></div><div class="rmeta" id="rMeta"></div></div>
+      <div class="rbadge" id="rBadge"></div>
+    </div>
+    <div class="rbody">
+      <div class="rsect">✓ Incluso no pacote</div>
+      <div class="pkg-tags" id="rPkgTags"></div>
+      <div class="rsec"><div class="rsect">Serviços e Peças — Oferta ao Cliente</div><div class="igrid" id="rItens"></div></div>
+      <div class="rsec" id="rSecExt" style="display:none"><div class="rsect">Itens Extras</div><div class="igrid" id="rExtras"></div></div>
+      <div class="rsec"><div class="rsect">Gôndola</div><div class="igrid" id="rGond"></div></div>
+      <button class="btn-sec" onclick="resetar()">← Nova Consulta</button>
+    </div>
+  </div>
+
+</div><!-- /main -->
+
+<script>
+// ── CATÁLOGO de modelos e motores ──────────────────────────────────
+var CAT={
+  'Fiat':{'Argo':{a:[2017,2026],m:['1.0 Firefly','1.3 Firefly','1.8 E.torQ']},'Cronos':{a:[2018,2026],m:['1.3 Firefly','1.8 E.torQ']},'Pulse':{a:[2021,2026],m:['1.0 Turbo 200 Flex','1.3 Firefly']},'Fastback':{a:[2022,2026],m:['1.0 Turbo 200 Flex','1.3 Firefly Turbo']},'Mobi':{a:[2016,2026],m:['1.0 Firefly']},'Uno':{a:[1984,2022],m:['1.0 Fire','1.0 Firefly','1.4 EVO']},'Palio':{a:[1996,2017],m:['1.0 Fire','1.4 EVO','1.6 16V','1.8 16V']},'Siena':{a:[1997,2016],m:['1.0 Fire','1.4 EVO','1.6 16V']},'Grand Siena':{a:[2012,2021],m:['1.4 EVO','1.6 16V']},'Strada':{a:[1998,2026],m:['1.3 Firefly','1.4 EVO','1.8 16V Flex']},'Toro':{a:[2016,2026],m:['1.8 16V Flex','2.0 Diesel 4x4','1.3 Turbo Flex']},'Doblo':{a:[2001,2022],m:['1.4 Fire','1.8 16V Flex','1.6 Multijet Diesel']},'Ducato':{a:[1997,2026],m:['2.3 Multijet Diesel']},'Fiorino':{a:[1988,2026],m:['1.4 EVO Flex']},'Palio Weekend':{a:[1997,2014],m:['1.0 Fire','1.4 EVO','1.6 16V']},'Idea':{a:[2005,2015],m:['1.4 EVO Flex','1.6 16V Flex','1.8 16V Flex']},'Punto':{a:[2007,2013],m:['1.4 Flex','1.8 16V Flex']},'Bravo':{a:[2010,2015],m:['1.4 T-Jet Turbo','1.8 16V Flex']},'Linea':{a:[2008,2016],m:['1.8 16V Flex']}},
+  'Volkswagen':{'Gol':{a:[1980,2022],m:['1.0 Flex','1.6 Flex','1.0 Turbo']},'Polo':{a:[2002,2026],m:['1.0 MPI Flex','1.0 TSI Turbo','1.6 MSI Flex']},'Virtus':{a:[2018,2026],m:['1.0 TSI Turbo','1.6 MSI Flex']},'Nivus':{a:[2020,2026],m:['1.0 TSI 200 Turbo']},'T-Cross':{a:[2019,2026],m:['1.0 TSI Turbo','1.4 TSI Turbo']},'Tiguan':{a:[2008,2026],m:['1.4 TSI','2.0 TSI','2.0 TDI Diesel']},'Jetta':{a:[1993,2026],m:['1.0 TSI','1.4 TSI','2.0 TSI','2.0 TDI Diesel']},'Golf':{a:[1994,2026],m:['1.0 TSI','1.4 TSI','2.0 TSI GTI']},'Voyage':{a:[2006,2022],m:['1.0 Flex','1.6 Flex']},'Saveiro':{a:[1985,2026],m:['1.6 Flex','1.0 Turbo Flex']},'Amarok':{a:[2010,2026],m:['2.0 Biturbo Diesel','3.0 V6 TDI Diesel']},'Up!':{a:[2014,2022],m:['1.0 MPI Flex']},'Fox':{a:[2004,2015],m:['1.0 Flex','1.6 Flex']},'Parati':{a:[1982,2006],m:['1.0 Flex','1.6 Flex']},'Kombi':{a:[1957,2013],m:['1.4 Flex']},'CrossFox':{a:[2005,2015],m:['1.6 Flex']},'SpaceFox':{a:[2006,2013],m:['1.6 Flex']}},
+  'Chevrolet':{'Onix':{a:[2012,2026],m:['1.0 Flex','1.0 Turbo','1.4 Flex']},'Onix Plus':{a:[2019,2026],m:['1.0 Turbo','1.0 Flex']},'Tracker':{a:[2013,2026],m:['1.0 Turbo','1.2 Turbo','1.4 Turbo','1.8 Flex']},'Montana':{a:[2003,2026],m:['1.4 Turbo Flex','1.8 Flex']},'S10':{a:[1995,2026],m:['2.5 Turbo Diesel','2.8 CTDi Diesel','2.4 Flex']},'Spin':{a:[2012,2026],m:['1.0 Turbo Flex','1.8 Flex']},'Equinox':{a:[2018,2026],m:['1.5 Turbo Flex','2.0 Turbo Flex']},'Blazer':{a:[2019,2026],m:['1.0 Turbo','2.0 Turbo']},'Cruze':{a:[2012,2026],m:['1.4 Turbo Flex','1.8 Flex']},'Bolt':{a:[2021,2026],m:['Elétrico 150kW']},'Prisma':{a:[2013,2020],m:['1.0 Flex','1.4 Flex']},'Classic':{a:[2002,2011],m:['1.0 Flex','1.4 Flex']},'Cobalt':{a:[2011,2019],m:['1.4 Flex','1.8 Flex']},'Agile':{a:[2009,2014],m:['1.4 Flex']},'Celta':{a:[2001,2014],m:['1.0 Flex']},'Corsa':{a:[1994,2012],m:['1.0 Flex','1.4 Flex']},'Vectra':{a:[1993,2011],m:['2.0 Flex','2.4 Flex']},'Astra':{a:[1994,2011],m:['1.8 Flex','2.0 Flex']},'Trailblazer':{a:[2012,2026],m:['2.8 CTDi Diesel 4x4']},'Meriva':{a:[2002,2012],m:['1.4 Flex','1.8 Flex']}},
+  'Toyota':{'Corolla':{a:[1993,2026],m:['1.8 Flex','2.0 Flex','1.8 Híbrido','2.0 Híbrido']},'Corolla Cross':{a:[2021,2026],m:['2.0 Flex','2.0 Híbrido']},'Hilux':{a:[2005,2026],m:['2.8 Turbodiesel 4x4','2.7 Flex 4x2','2.8 Turbodiesel 4x2']},'SW4':{a:[2006,2026],m:['2.8 Turbodiesel 4x4']},'RAV4':{a:[2000,2026],m:['2.5 Híbrido AWD','2.0 Flex']},'Yaris':{a:[2018,2026],m:['1.5 Flex']},'Etios':{a:[2012,2020],m:['1.3 Flex','1.5 Flex']},'Prius':{a:[2012,2026],m:['1.8 Híbrido','2.0 Híbrido']},'Land Cruiser':{a:[1962,2026],m:['4.0 V6 Gasolina','4.5 V8 Diesel']}},
+  'Honda':{'Civic':{a:[1992,2026],m:['2.0 Flex','1.5 Turbo','1.0 Turbo','2.0 Híbrido e:HEV']},'HR-V':{a:[2015,2026],m:['1.5 Turbo Flex','1.8 Flex']},'CR-V':{a:[2003,2026],m:['1.5 Turbo Flex AWD','2.0 Flex','2.0 Híbrido']},'Fit':{a:[2003,2020],m:['1.5 Flex','1.4 Flex']},'City':{a:[2009,2026],m:['1.5 Flex','1.0 Turbo Flex']},'WR-V':{a:[2017,2026],m:['1.5 Flex','1.0 Turbo Flex']}},
+  'Hyundai':{'HB20':{a:[2012,2026],m:['1.0 Flex','1.0 Turbo Flex','1.6 Flex']},'HB20S':{a:[2013,2026],m:['1.0 Flex','1.0 Turbo Flex','1.6 Flex']},'HB20X':{a:[2013,2019],m:['1.6 Flex']},'Creta':{a:[2016,2026],m:['1.0 Turbo Flex','2.0 Flex','1.6 Flex']},'Tucson':{a:[2003,2026],m:['1.6 Turbo Flex','2.0 Flex','2.0 CRDi Diesel']},'Santa Fe':{a:[2001,2026],m:['2.5 MPI Flex','2.2 CRDi Diesel']},'Elantra':{a:[1997,2026],m:['2.0 Flex','1.6 Flex']},'ix35':{a:[2010,2021],m:['2.0 Flex','2.0 CRDi Diesel']},'Ioniq':{a:[2020,2026],m:['Elétrico 100kW','Híbrido 1.6']}},
+  'Renault':{'Kwid':{a:[2017,2026],m:['1.0 SCe Flex']},'Sandero':{a:[2007,2026],m:['1.0 Flex','1.6 Flex','1.0 Turbo']},'Logan':{a:[2007,2022],m:['1.0 Flex','1.6 Flex']},'Stepway':{a:[2010,2026],m:['1.0 Turbo Flex','1.6 Flex']},'Duster':{a:[2012,2026],m:['1.3 Turbo Flex','1.6 Flex','2.0 Flex 4x4']},'Captur':{a:[2017,2026],m:['1.3 Turbo Flex','2.0 Flex']},'Oroch':{a:[2016,2026],m:['1.3 Turbo Flex','2.0 Flex 4x4']},'Clio':{a:[1993,2014],m:['1.0 Flex','1.6 Flex']},'Megane':{a:[1996,2012],m:['1.6 Flex','2.0 Flex']}},
+  'Ford':{'Ka':{a:[1997,2021],m:['1.0 Flex','1.5 Flex']},'Ka+':{a:[2014,2021],m:['1.0 Flex','1.5 Flex']},'EcoSport':{a:[2003,2022],m:['1.5 Flex','2.0 Flex','1.0 EcoBoost Turbo']},'Ranger':{a:[1996,2026],m:['2.2 Diesel','3.2 Diesel','2.0 Diesel Biturbo','2.5 Flex']},'Territory':{a:[2020,2026],m:['1.5 EcoBoost Turbo']},'Mustang':{a:[1965,2026],m:['2.3 EcoBoost Turbo','5.0 V8 Gasolina']},'Fiesta':{a:[1996,2020],m:['1.0 Flex','1.6 Flex']},'Focus':{a:[2009,2019],m:['2.0 Flex','1.6 Flex']},'Fusion':{a:[2006,2019],m:['2.5 Flex','2.0 Turbo']},'F-250':{a:[1999,2022],m:['6.7 Diesel','3.5 Gasolina']}},
+  'Jeep':{'Compass':{a:[2017,2026],m:['2.0 Diesel 4x4','1.3 Turbo Flex','2.0 Turbo Gasolina']},'Renegade':{a:[2015,2026],m:['1.8 Flex','2.0 Diesel 4x4','1.3 Turbo Flex']},'Commander':{a:[2021,2026],m:['1.3 Turbo Flex','3.0 V6 Diesel 4x4']},'Wrangler':{a:[1992,2026],m:['3.6 V6 Gasolina','2.0 Turbo Gasolina']},'Grand Cherokee':{a:[2011,2026],m:['3.6 V6 Gasolina','3.0 V6 Diesel']},'Cherokee':{a:[1993,2022],m:['3.2 V6 Gasolina']}},
+  'Nissan':{'Kicks':{a:[2016,2026],m:['1.6 Flex','1.0 Turbo Flex']},'Versa':{a:[2011,2026],m:['1.6 Flex','1.0 Turbo Flex']},'Sentra':{a:[2001,2022],m:['2.0 Flex','1.6 Flex']},'Frontier':{a:[1997,2026],m:['2.5 Diesel 4x4','4.0 V6 Gasolina']},'March':{a:[2011,2018],m:['1.0 Flex','1.6 Flex']},'Leaf':{a:[2019,2026],m:['Elétrico 110kW']}},
+  'Peugeot':{'208':{a:[2013,2026],m:['1.2 PureTech Turbo','1.6 THP Turbo Gasolina','1.5 BlueHDi Diesel']},'2008':{a:[2014,2026],m:['1.2 PureTech Turbo Gasolina','Elétrico']},'3008':{a:[2012,2026],m:['1.6 THP Turbo Gasolina','1.5 BlueHDi Diesel','1.2 PureTech Gasolina']},'308':{a:[2011,2021],m:['1.6 THP Turbo Gasolina','1.5 BlueHDi Diesel']},'207':{a:[2007,2012],m:['1.4 Flex','1.6 16V Flex']},'Partner':{a:[1997,2026],m:['1.6 Flex','1.6 HDi Diesel']}},
+  'Citroën':{'C3':{a:[2003,2026],m:['1.0 Flex','1.2 PureTech Turbo']},'C4 Cactus':{a:[2017,2023],m:['1.6 Flex','1.8 Flex']},'Aircross':{a:[2010,2023],m:['1.6 Flex','2.0 Flex']},'C4':{a:[2003,2020],m:['1.6 Flex','2.0 Flex','1.6 HDi Diesel']}},
+  'Mitsubishi':{'ASX':{a:[2011,2026],m:['2.0 Flex','2.0 4x4 Flex']},'Eclipse Cross':{a:[2018,2026],m:['1.5 Turbo Gasolina']},'Outlander':{a:[2004,2026],m:['2.0 Flex','2.4 Flex','3.0 V6']},'Pajero Sport':{a:[1998,2026],m:['2.5 Turbo Diesel 4x4','3.0 V6 Flex']},'Pajero Full':{a:[1992,2026],m:['3.2 DI-D Diesel','3.8 V6 Gasolina']},'L200 Triton':{a:[2008,2026],m:['2.4 Diesel 4x4','3.5 V6 Flex']}},
+  'Kia':{'Sportage':{a:[2003,2026],m:['1.6 Turbo Flex','2.0 Flex','2.0 CRDi Diesel']},'Sorento':{a:[2003,2026],m:['2.5 CRDi Diesel','3.3 V6 Gasolina']},'Carnival':{a:[2000,2026],m:['3.5 V6 Gasolina','2.2 CRDi Diesel']},'Cerato':{a:[2004,2022],m:['1.6 Flex','2.0 Flex']},'EV6':{a:[2022,2026],m:['Elétrico 168kW','Elétrico 239kW AWD']}},
+  'BMW':{'320i':{a:[2005,2026],m:['2.0 Turbo Gasolina']},'118i':{a:[2010,2026],m:['1.5 Turbo Gasolina','1.6 Turbo Gasolina']},'X1':{a:[2010,2026],m:['2.0 Turbo Gasolina','2.0 Diesel','1.5 Turbo Gasolina']},'X3':{a:[2004,2026],m:['2.0 Turbo Gasolina','2.0 Diesel']},'X5':{a:[2000,2026],m:['3.0 Turbo Gasolina','3.0 Diesel']},'i4':{a:[2022,2026],m:['Elétrico 210kW']}},
+  'Mercedes-Benz':{'A200':{a:[2013,2026],m:['1.3 Turbo Gasolina','2.0 AMG Turbo Gasolina']},'C200':{a:[2000,2026],m:['1.5 Turbo Gasolina','2.0 Turbo Gasolina']},'GLA':{a:[2014,2026],m:['1.3 Turbo Gasolina','2.0 AMG Turbo']},'GLC':{a:[2016,2026],m:['2.0 Turbo Gasolina','2.0 Diesel']},'GLE':{a:[2015,2026],m:['3.0 Turbo Gasolina','2.9 Diesel']},'Sprinter':{a:[1999,2026],m:['2.2 CDI Diesel']}},
+  'Audi':{'A3':{a:[2000,2026],m:['1.4 TFSI Turbo Gasolina','2.0 TFSI Turbo Gasolina','2.0 TDI Diesel']},'A4':{a:[1995,2026],m:['1.4 TFSI Gasolina','2.0 TFSI Gasolina','2.0 TDI Diesel']},'Q3':{a:[2012,2026],m:['1.4 TFSI Gasolina','2.0 TFSI Gasolina','2.0 TDI Diesel']},'Q5':{a:[2009,2026],m:['2.0 TFSI Gasolina','2.0 TDI Diesel']}},
+  'Volvo':{'XC40':{a:[2018,2026],m:['2.0 T4 Turbo Gasolina','2.0 T5 Turbo Gasolina','Elétrico Recharge']},'XC60':{a:[2008,2026],m:['2.0 T5 Turbo Gasolina','2.0 T6 Turbo Gasolina','Híbrido T8']},'XC90':{a:[2003,2026],m:['2.0 T5 Turbo Gasolina','Híbrido T8']}},
+  'Caoa Chery':{'Tiggo 5x':{a:[2018,2026],m:['1.5 Turbo Flex']},'Tiggo 7':{a:[2017,2026],m:['1.5 Turbo Gasolina','2.0 Turbo Gasolina']},'Tiggo 7 Pro':{a:[2021,2026],m:['1.5 TGDI Turbo Gasolina','2.0 TGDI Turbo Gasolina']},'Tiggo 8':{a:[2019,2026],m:['1.5 Turbo Gasolina','2.0 Turbo Gasolina']},'Tiggo 8 Pro':{a:[2021,2026],m:['2.0 TGDI Turbo 4x4','PHEV Híbrido']}},
+  'BYD':{'Dolphin':{a:[2023,2026],m:['Elétrico 70kW','Elétrico 130kW']},'Seal':{a:[2023,2026],m:['Elétrico 230kW AWD']},'Song Plus':{a:[2022,2026],m:['PHEV Híbrido','Elétrico']},'Atto 3':{a:[2023,2026],m:['Elétrico 150kW']}},
+  'GWM':{'Haval H6':{a:[2021,2026],m:['1.5 Turbo Gasolina','1.5 PHEV Híbrido']},'Haval H2':{a:[2016,2022],m:['1.5 Turbo Gasolina']},'Ora':{a:[2022,2026],m:['Elétrico 105kW']},'Tank 300':{a:[2022,2026],m:['2.0 Turbo Gasolina 4x4']}},
+  'Suzuki':{'Vitara':{a:[2015,2026],m:['1.4 Turbo Gasolina']},'Jimny':{a:[2019,2026],m:['1.5 Gasolina 4x4']},'Swift':{a:[2012,2022],m:['1.2 Gasolina']}},
+  'Dodge':{'Ram 1500':{a:[2012,2026],m:['5.7 HEMI V8 Gasolina']},'Journey':{a:[2009,2020],m:['2.7 V6 Gasolina','3.6 V6 Gasolina']}},
+};
+
+// ── PACOTES ────────────────────────────────────────────────────────
+var PKGS={
+  ouro:{l:'🥇 Ouro',b:'bo',t:'ptag-o',itens:['Óleo do motor','Filtro de óleo','Filtro de combustível'],kw:['oleo','óleo','filtro de oleo','filtro de óleo','filtro combustivel','filtro de combustível']},
+  plat:{l:'💎 Platinum',b:'bp',t:'ptag-p',itens:['Óleo do motor','Filtro de óleo','Filtro de combustível','Filtro de ar do motor','Filtro de cabine','Higienizador A/C'],kw:['oleo','óleo','filtro de oleo','filtro de óleo','filtro combustivel','filtro de combustível','filtro ar','filtro de ar','filtro cabine','filtro de cabine','higieniz']},
+  dia:{l:'💠 Diamante',b:'bd',t:'ptag-d',itens:['Óleo do motor','Filtro de óleo','Filtro de combustível','Filtro de ar do motor','Filtro de cabine','Higienizador A/C','Velas de ignição'],kw:['oleo','óleo','filtro de oleo','filtro de óleo','filtro combustivel','filtro de combustível','filtro ar','filtro de ar','filtro cabine','filtro de cabine','higieniz','vela']},
+};
+
+var GONDOLA=[
+  {n:'Limpeza de TBI',t:'srv',m:'Reduz consumo e melhora desempenho do motor.'},
+  {n:'Aditivo Limpa Vidros',t:'peca',m:'Melhora visibilidade em chuva e sol forte.'},
+  {n:'Lavagem Completa',t:'srv',m:'Higienização geral no retorno da revisão.'},
+  {n:'Aditivo Flex Combustível',t:'peca',m:'Limpa injeção e melhora queima em motores flex.'},
+];
+
+// ── ESTADO ─────────────────────────────────────────────────────────
+var usoSel='', pkgSel='', itensGerados=[], extraCnt=0;
+var estado={}, gondEstado={}, detalhe={}, detalheMulti={};
+
+// ── UTILS ──────────────────────────────────────────────────────────
+function n(s){return s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');}
+function g(id){return document.getElementById(id);}
+function showErr(m){var e=g('errEl');e.textContent=m;e.className='err show';}
+function hideErr(){g('errEl').className='err';}
+
+// ── BUSCA KAVAK DB ─────────────────────────────────────────────────
+function buscar(){
+  var q=g('iStock').value.trim().toUpperCase();
+  g('foundBox').className='found-box';
+  g('notFoundBox').className='notfound-box';
+  if(!q)return;
+  if(typeof KDB==='undefined'){alert('Base de dados não carregada. Verifique o arquivo kavak_db.js.');return;}
+  var r=KDB[q]||KDB[q.replace(/-/g,'')]||KDB[String(parseInt(q,10))];
+  if(r){
+    g('iMarca').value=r.m; g('iMarca').readOnly=true;
+    g('iModelo').value=r.mo; g('iModelo').readOnly=true;
+    g('iAno').value=r.a; g('iAno').readOnly=true;
+    g('iKm').value=r.k;
+    setTimeout(function(){popMotores(r.m,r.mo,'');},50);
+    g('foundTxt').textContent='✓ '+r.m+' '+r.mo+' '+r.a;
+    g('foundDet').textContent='Hub: '+(r.h||'—')+' · '+parseInt(r.k).toLocaleString('pt-BR')+' km · Stock: '+(r.p||q);
+    g('foundBox').className='found-box show';
+  } else {
+    g('notFoundBox').className='notfound-box show';
+  }
+}
+
+// ── AUTOCOMPLETE ───────────────────────────────────────────────────
+function acShow(f){
+  var inp=g(f==='marca'?'iMarca':'iModelo');
+  if(inp.readOnly)return;
+  var lst=g(f==='marca'?'acMarca':'acModelo');
+  var q=n(inp.value);
+  var items=f==='marca'
+    ? Object.keys(CAT).filter(function(m){return n(m).indexOf(q)>=0;})
+    : (CAT[g('iMarca').value]?Object.keys(CAT[g('iMarca').value]).filter(function(m){return n(m).indexOf(q)>=0;}): []);
+  lst.innerHTML='';
+  if(!items.length){lst.className='acl';return;}
+  items.slice(0,14).forEach(function(item){
+    var d=document.createElement('div');d.className='aci';
+    if(f==='modelo'){
+      var r=CAT[g('iMarca').value]&&CAT[g('iMarca').value][item]?CAT[g('iMarca').value][item].a:null;
+      d.innerHTML=item+(r?'<div class="aci-s">'+r[0]+' – '+(r[1]===2026?'atual':r[1])+'</div>':'');
+    } else {d.textContent=item;}
+    d.onmousedown=function(e){
+      e.preventDefault();inp.value=item;lst.className='acl';
+      if(f==='marca'){
+        g('iModelo').value='';g('iModelo').placeholder='Digite o modelo...';
+        g('iAno').value='';g('wAno').className='field-warn';
+        g('iAno').readOnly=false;
+        g('iMotor').innerHTML='<option value="">Selecione o modelo primeiro...</option>';
+        g('iModelo').focus();
+      } else {
+        validarAno();
+        popMotores(g('iMarca').value,item,'');
+      }
+    };
+    lst.appendChild(d);
+  });
+  lst.className='acl open';
+}
+function acHide(f){g(f==='marca'?'acMarca':'acModelo').className='acl';}
+
+// ── MOTORES ────────────────────────────────────────────────────────
+function popMotores(marca,modelo,sel){
+  var s=g('iMotor');s.innerHTML='<option value="">Selecione a versão...</option>';
+  if(!CAT[marca]||!CAT[marca][modelo])return;
+  CAT[marca][modelo].m.forEach(function(m){
+    var o=document.createElement('option');o.value=m;o.textContent=m;
+    if(m===sel)o.selected=true;
+    s.appendChild(o);
+  });
+  if(sel)autoCombu();
+}
+function autoCombu(){
+  var m=g('iMotor').value.toLowerCase();
+  var c=g('iComb');
+  if(!m)return;
+  if(/elétrico|eletrico|ev\b|bev/.test(m)) c.value='Elétrico';
+  else if(/phev|híbrido|hibrido|e:hev/.test(m)) c.value='Híbrido';
+  else if(/diesel|tdi|tdci|dci|cdi|crdi|bluehdi|multijet/.test(m)) c.value='Diesel';
+  else if(/flex|firefly|e\.torq/.test(m)) c.value='Flex (Gasolina/Etanol)';
+  else c.value='Gasolina';
+}
+
+// ── VALIDAR ANO ────────────────────────────────────────────────────
+function validarAno(){
+  var ma=g('iMarca').value.trim(),mo=g('iModelo').value.trim(),a=parseInt(g('iAno').value);
+  var w=g('wAno'),inp=g('iAno');
+  if(!ma||!mo||!a){w.className='field-warn';inp.style.borderColor='';return;}
+  if(!CAT[ma]||!CAT[ma][mo]){w.className='field-warn';return;}
+  var r=CAT[ma][mo].a;
+  if(a<r[0]||a>r[1]){
+    w.textContent='⚠ '+mo+' fabricado de '+r[0]+' a '+(r[1]===2026?'hoje':r[1]);
+    w.className='field-warn show';inp.style.borderColor='var(--red)';
+  } else {w.className='field-warn';inp.style.borderColor='';}
+}
+
+// ── CHIPS / PACOTE ─────────────────────────────────────────────────
+function setUso(el,v){document.querySelectorAll('.chip').forEach(function(c){c.className='chip';});el.className='chip on';usoSel=v;}
+function setPkg(k){
+  pkgSel=k;
+  g('pO').className='pkg'+(k==='ouro'?' on-ouro':'');
+  g('pP').className='pkg'+(k==='plat'?' on-plat':'');
+  g('pD').className='pkg'+(k==='dia'?' on-dia':'');
+}
+
+// ── GERAR ITENS ────────────────────────────────────────────────────
+function gerarItens(km,ano,uso,comb,motor,pkg){
+  var idade=2026-ano;
+  var isApp=uso==='Aplicativo',isOff=uso==='Off-road',isUrb=uso==='Urbano intenso';
+  var isDiesel=/diesel|tdi|tdci|dci|cdi|crdi/i.test(comb+' '+motor);
+  var isElet=/elétrico|eletrico/i.test(comb);
+  var isHib=/híbrido|hibrido|phev/i.test(comb);
+  var isGNV=/gnv/i.test(comb);
+  var isTurbo=/turbo/i.test(motor);
+  var kw=pkg.kw;
+  var res=[];
+
+  function add(nome,tipo,prio,motivo,intervalo,detObj){
+    var nome_n=n(nome);
+    if(kw.some(function(k){return nome_n.indexOf(n(k))>=0;}))return;
+    res.push({nome:nome,tipo:tipo,prio:prio,motivo:motivo,intervalo:intervalo||'',det:detObj||null});
+  }
+
+  if(!isElet&&!isHib){
+    add('Alinhamento e balanceamento','srv','rec','Desgaste irregular dos pneus indica necessidade de alinhamento.','A cada 10.000 km');
+    add('Reaperto geral da suspensão','srv','rec','Reaperto de parafusos, porcas e pontos de fixação da suspensão.','A cada 10.000 km');
+    add('Troca do fluido de freio','srv','rec','Fluido higroscópico absorve umidade e perde eficiência com o tempo.','A cada 2 anos ou 40.000 km');
+    add('Rodízio, calibragem e troca de pneus','srv','rec','Rodízio prolonga a vida útil e corrige desgaste irregular.','A cada 10.000 km',
+      {q:'Quais pneus precisam ser trocados? (multi-seleção)',ops:['Nenhum — só rodízio e calibragem','Dianteiro Esquerdo (DE)','Dianteiro Direito (DD)','Traseiro Esquerdo (TE)','Traseiro Direito (TD)'],multi:true});
+
+    if(isUrb||isApp)
+      add('Troca de pastilhas de freio','srv','crit','Uso urbano/aplicativo acelera o desgaste das pastilhas.','A cada 10.000-15.000 km em uso intenso',
+        {q:'Quais eixos precisam de troca?',ops:['Eixo dianteiro','Eixo traseiro','Eixo dianteiro e traseiro']});
+
+    if(isDiesel)
+      add('Troca do filtro de ar (Diesel)','peca','crit','Motor Diesel consome mais ar — filtro entupido prejudica injeção.','A cada 15.000-20.000 km');
+
+    if(km>=30000){
+      add('Troca da correia e tensionador de acessórios','srv','rec','Correia com trincas ou folga afeta alternador, A/C e direção.','A cada 30.000 km');
+      if(isTurbo)
+        add('Limpeza do intercooler e mangueiras do turbo','srv','rec','Acúmulo de óleo reduz eficiência do turbo e aumenta consumo.','A cada 30.000 km');
+      add('Troca do fluido de direção hidráulica','peca','opt','Fluido escuro indica oxidação — substituição prolonga vida da bomba.','A cada 40.000 km');
+      if(isOff)
+        add('Troca de amortecedores','srv','crit','Off-road acelera o desgaste — amortecedores com vazamento comprometem segurança.','A cada 20.000 km em uso off-road',
+          {q:'Quais amortecedores substituir?',ops:['Dianteiros','Traseiros','Os 4 amortecedores']});
+    }
+    if(km>=40000){
+      add('Limpeza e recarga do sistema de arrefecimento','srv','rec','Aditivo degradado perde proteção anticorrosão.','A cada 2 anos ou 40.000 km',
+        {q:'Condição do fluido de arrefecimento:',ops:['Completar nível do reservatório','Limpeza completa e recarga do sistema']});
+      add('Troca do fluido de câmbio automático','peca','rec','Fluido degradado causa solavancos e deslizamento de marchas.','A cada 40.000-60.000 km');
+      if(isUrb||isApp)
+        add('Troca de buchas de suspensão','srv','rec','Alta km em cidade desgasta buchas — ruídos e folgas indicam substituição.','A cada 40.000 km',
+          {q:'O que precisa ser substituído?',ops:['Buchas dianteiras','Buchas traseiras','Bandeja dianteira','Bandeja traseira','Buchas e bandejas completas']});
+    }
+    if(km>=60000){
+      add('Troca da correia dentada / corrente de distribuição','srv','crit','Componente crítico — ruptura causa dano grave ao motor.','Entre 60.000 e 100.000 km — verificar manual do fabricante');
+      add('Troca da bomba d\'água','peca','rec','Realizada junto com a correia dentada — aproveitar mão de obra.','Substituir junto com a correia dentada');
+      if(!isDiesel)
+        add('Troca das velas de ignição','peca','rec','Velas desgastadas aumentam consumo e dificultam partida a frio.','A cada 20.000-30.000 km (conv.) ou 60.000-100.000 km (iridium)');
+    }
+    if(km>=80000)
+      add('Limpeza do sistema de injeção','srv','rec','Bicos parcialmente entupidos aumentam consumo e reduzem potência.','A cada 80.000 km');
+    if(km>=100000){
+      add('Troca completa do fluido de arrefecimento','peca','crit','Após 100.000 km perde proteção anticorrosão — risco de corrosão interna.','A cada 100.000 km ou 5 anos');
+      add('Revisão do sistema de freios','srv','crit','Substituição de discos, mangueiras e pinças conforme desgaste.','A cada 80.000-100.000 km',
+        {q:'O que precisa ser substituído?',ops:['Discos dianteiros','Discos traseiros','Discos dianteiros e traseiros','Mangueiras de freio','Conjunto completo']});
+    }
+  } else {
+    // Elétrico / Híbrido
+    add('Troca do fluido de freio','srv','rec','Freios regenerativos reduzem uso, mas fluido ainda envelhece.','A cada 2 anos');
+    add('Rodízio e calibragem de pneus','srv','rec','Peso extra da bateria acelera desgaste — rodízio essencial.','A cada 10.000 km',
+      {q:'Quais pneus precisam ser trocados?',ops:['Nenhum — só rodízio e calibragem','Dianteiro Esquerdo (DE)','Dianteiro Direito (DD)','Traseiro Esquerdo (TE)','Traseiro Direito (TD)'],multi:true});
+    if(km>=40000)
+      add('Manutenção do sistema de refrigeração da bateria','srv','crit','Bomba ou fluido degradado compromete a vida útil da bateria.','A cada 40.000 km ou 2 anos');
+    if(km>=60000)
+      add('Diagnóstico de degradação da bateria','srv','rec','Análise da capacidade de carga — perda acima de 20% requer substituição.','A cada 60.000 km');
+  }
+
+  if(idade>=3)
+    add('Teste e substituição da bateria','peca','rec','Realizar teste com aparelho homologado — bateria com '+idade+' anos próxima do fim de vida útil.','A cada 3-5 anos',
+      {q:'Resultado do teste com aparelho homologado:',ops:['Bateria aprovada — não substituir','Bateria reprovada — substituir']});
+  if(idade>=4)
+    add('Troca de mangueiras','srv','opt','Mangueiras com trincas devem ser substituídas para evitar vazamentos.','A cada 4 anos',
+      {q:'Quais mangueiras substituir?',ops:['Mangueira superior do radiador','Mangueira inferior do radiador','Mangueiras do A/C','Mangueiras do freio','Todas as mangueiras']});
+  if(isGNV)
+    add('Recertificação do cilindro GNV','srv','crit','Obrigatório por lei — laudo INMETRO vencido impede circulação.','A cada 5 anos (INMETRO)');
+
+  // Deduplicar
+  var uniq=[],nomes={};
+  res.forEach(function(i){if(!nomes[i.nome]){nomes[i.nome]=1;uniq.push(i);}});
+  var ord={crit:0,rec:1,opt:2};
+  return uniq.sort(function(a,b){return ord[a.prio]-ord[b.prio];});
+}
+
+// ── ANALISAR ───────────────────────────────────────────────────────
+function analisar(){
+  var marca=g('iMarca').value.trim(),modelo=g('iModelo').value.trim();
+  var ano=g('iAno').value.trim(),km=g('iKm').value.trim();
+  var motor=g('iMotor').value,comb=g('iComb').value;
+  hideErr();
+  if(!marca)return showErr('⚠ Informe a marca.');
+  if(!modelo)return showErr('⚠ Informe o modelo.');
+  if(!ano)return showErr('⚠ Informe o ano.');
+  if(!motor)return showErr('⚠ Selecione a versão/motor.');
+  if(!km)return showErr('⚠ Informe a quilometragem.');
+  if(!usoSel)return showErr('⚠ Selecione o tipo de uso.');
+  if(!pkgSel)return showErr('⚠ Selecione o pacote contratado.');
+
+  var anoN=parseInt(ano);
+  if(CAT[marca]&&CAT[marca][modelo]){
+    var r=CAT[marca][modelo].a;
+    if((anoN<r[0]||anoN>r[1])&&!confirm('Atenção: '+modelo+' fabricado de '+r[0]+' a '+(r[1]===2026?'hoje':r[1])+'. Continuar?'))return;
+  }
+
+  g('e2El').className='etapa2';g('rEl').className='rblock';
+  g('loadEl').className='loading show';
+
+  setTimeout(function(){
+    itensGerados=gerarItens(parseInt(km),anoN,usoSel,comb,motor,PKGS[pkgSel]);
+    estado={};gondEstado={};detalhe={};detalheMulti={};
+    montarE2(marca,modelo,ano,km);
+    g('loadEl').className='loading';
+  },500);
+}
+
+// ── MONTAR ETAPA 2 ─────────────────────────────────────────────────
+function montarE2(marca,modelo,ano,km){
+  g('e2Info').textContent=marca+' '+modelo+' '+ano+' · '+parseInt(km).toLocaleString('pt-BR')+' km';
+
+  var priCfg={crit:{l:'Crítico',t:'tag-crit',cls:'pri-crit'},rec:{l:'Recomendado',t:'tag-rec',cls:'pri-rec'},opt:{l:'Opcional',t:'tag-opt',cls:'pri-opt'}};
+
+  function criarCard(container, item, idx, pref){
+    var p=priCfg[item.prio]||priCfg.rec;
+    var tipoL=item.tipo==='srv'?'Serviço':'Peça';
+    var tipoCls=item.tipo==='srv'?'tag-srv':'tag-peca';
+
+    var div=document.createElement('div');
+    div.className='ichk '+p.cls;div.id=pref+'W'+idx;
+    div.innerHTML=
+      '<div class="ichk-btns">'
+        +'<div class="ibtn sim" id="'+pref+'S'+idx+'" title="Incluir na OS">✓</div>'
+        +'<div class="ibtn nao" id="'+pref+'N'+idx+'" title="Não incluir">✗</div>'
+      +'</div>'
+      +'<div class="ichk-body">'
+        +'<div class="ichk-tags"><span class="tag '+p.t+'">'+p.l+'</span><span class="tag '+tipoCls+'">'+tipoL+'</span></div>'
+        +'<div class="ichk-nome">'+item.nome+'</div>'
+        +'<div class="ichk-mot">'+item.motivo+'</div>'
+        +(item.intervalo?'<div class="ichk-int">⏱ '+item.intervalo+'</div>':'')
+        // Sub-pergunta se existir
+        +(item.det?
+          '<div class="subperg" id="'+pref+'SP'+idx+'">'
+            +'<div class="subperg-q">'+item.det.q+'</div>'
+            +'<div class="subperg-ops" id="'+pref+'OPS'+idx+'"></div>'
+            +'<div class="subperg-res" id="'+pref+'RES'+idx+'"></div>'
+          +'</div>'
+        :'')
+      +'</div>';
+    container.appendChild(div);
+
+    // Popular opções de sub-pergunta
+    if(item.det){
+      var opsEl=g(pref+'OPS'+idx);
+      item.det.ops.forEach(function(op,oi){
+        var s=document.createElement('div');s.className='sop';s.textContent=op;
+        s.onclick=function(){selDet(pref,idx,op,item.det.multi,item.det.ops);};
+        opsEl.appendChild(s);
+      });
+    }
+
+    // Eventos dos botões
+    var simEl=g(pref+'S'+idx),naoEl=g(pref+'N'+idx),wEl=g(pref+'W'+idx);
+    var spEl=item.det?g(pref+'SP'+idx):null;
+    var est=pref==='g'?gondEstado:estado;
+
+    simEl.onclick=function(){
+      if(est[pref+idx]==='sim'){
+        est[pref+idx]='';simEl.className='ibtn sim';naoEl.className='ibtn nao';
+        wEl.className='ichk '+p.cls;
+        if(spEl)spEl.className='subperg';
+        delete detalhe[pref+idx];delete detalheMulti[pref+idx];
+      } else {
+        est[pref+idx]='sim';simEl.className='ibtn sim on';naoEl.className='ibtn nao';
+        wEl.className='ichk '+p.cls+' st-sim';
+        if(spEl)spEl.className='subperg show';
+      }
+    };
+    naoEl.onclick=function(){
+      if(est[pref+idx]==='nao'){
+        est[pref+idx]='';simEl.className='ibtn sim';naoEl.className='ibtn nao';
+        wEl.className='ichk '+p.cls;
+      } else {
+        est[pref+idx]='nao';naoEl.className='ibtn nao on';simEl.className='ibtn sim';
+        wEl.className='ichk '+p.cls+' st-nao';
+        if(spEl)spEl.className='subperg';
+        delete detalhe[pref+idx];delete detalheMulti[pref+idx];
+      }
+    };
+  }
+
+  var lista=g('listaItens');lista.innerHTML='';
+  itensGerados.forEach(function(item,i){criarCard(lista,item,i,'i');});
+
+  var gond=g('listaGond');gond.innerHTML='';
+  GONDOLA.forEach(function(item,i){
+    criarCard(gond,{nome:item.n,tipo:item.t,prio:'rec',motivo:item.m,intervalo:'',det:null},i,'g');
+  });
+
+  g('extraWrap').innerHTML='';extraCnt=0;
+  g('e2El').className='etapa2 show';
+  g('e2El').scrollIntoView({behavior:'smooth',block:'start'});
+}
+
+// ── SELECIONAR DETALHE ─────────────────────────────────────────────
+function selDet(pref,idx,opcao,multi,todasOps){
+  var key=pref+idx;
+  var opsEl=g(pref+'OPS'+idx);
+  var resEl=g(pref+'RES'+idx);
+  if(!opsEl)return;
+
+  if(multi){
+    if(!detalheMulti[key])detalheMulti[key]=[];
+    if(opcao.indexOf('Nenhum')>=0){
+      detalheMulti[key]=[opcao];
+    } else {
+      detalheMulti[key]=detalheMulti[key].filter(function(o){return o.indexOf('Nenhum')<0;});
+      var pos=detalheMulti[key].indexOf(opcao);
+      if(pos>=0)detalheMulti[key].splice(pos,1);
+      else detalheMulti[key].push(opcao);
+    }
+    detalhe[key]=detalheMulti[key].length>0?detalheMulti[key].join(', '):null;
+    // Atualizar visual
+    var spans=opsEl.querySelectorAll('.sop');
+    spans.forEach(function(s){
+      var sel=detalheMulti[key]&&detalheMulti[key].indexOf(s.textContent)>=0;
+      s.className='sop'+(sel?' on':'');
+    });
+    if(resEl){
+      resEl.textContent=detalheMulti[key]&&detalheMulti[key].length?'→ OS: '+detalheMulti[key].join(' + '):'';
+      resEl.className='subperg-res'+(detalhe[key]?' show':'');
+    }
+  } else {
+    detalhe[key]=opcao;
+    var spans2=opsEl.querySelectorAll('.sop');
+    spans2.forEach(function(s){s.className='sop'+(s.textContent===opcao?' on':'');});
+    if(resEl){resEl.textContent='→ OS: '+opcao;resEl.className='subperg-res show';}
+  }
+}
+
+// ── EXTRAS ────────────────────────────────────────────────────────
+function addExtra(){
+  var id=extraCnt++;
+  var wrap=g('extraWrap');
+  var div=document.createElement('div');div.className='extra-row';div.id='ex'+id;
+  div.innerHTML=
+    '<input type="text" placeholder="Nome da peça ou serviço..." id="exN'+id+'">'
+    +'<select id="exT'+id+'"><option value="srv">🔧 Serviço</option><option value="peca">🔩 Peça</option></select>'
+    +'<select id="exP'+id+'"><option value="rec" selected>Recomendado</option><option value="crit">Crítico</option><option value="opt">Opcional</option></select>'
+    +'<button class="btn-rm" onclick="rmEx('+id+')" title="Remover">×</button>';
+  wrap.appendChild(div);
+}
+function rmEx(id){var e=g('ex'+id);if(e)e.parentNode.removeChild(e);}
+
+// ── FINALIZAR OS ───────────────────────────────────────────────────
+function finalizar(){
+  // Validar: pelo menos 1 ✓
+  var temSim=Object.keys(estado).some(function(k){return estado[k]==='sim';})
+    ||Object.keys(gondEstado).some(function(k){return gondEstado[k]==='sim';});
+  if(!temSim){
+    for(var i=0;i<extraCnt;i++){var e=g('exN'+i);if(e&&e.value.trim()){temSim=true;break;}}
+  }
+  if(!temSim){showErr('⚠ Clique ✓ em pelo menos um item para gerar a OS.');return;}
+
+  // Validar detalhes obrigatórios
+  var faltam=[];
+  itensGerados.forEach(function(item,i){
+    if(estado['i'+i]==='sim'&&item.det&&!detalhe['i'+i])faltam.push(item.nome);
+  });
+  if(faltam.length){
+    showErr('⚠ Selecione uma opção para: '+faltam.join(', '));
+    g('e2El').scrollIntoView({behavior:'smooth',block:'start'});
+    return;
+  }
+  hideErr();
+
+  var marca=g('iMarca').value.trim(),modelo=g('iModelo').value.trim();
+  var ano=g('iAno').value.trim(),km=parseInt(g('iKm').value)||0;
+  var motor=g('iMotor').value,uso=usoSel,pkg=PKGS[pkgSel];
+
+  g('rVeh').textContent=marca+' '+modelo+' '+ano+(motor?' · '+motor:'');
+  g('rMeta').textContent=km.toLocaleString('pt-BR')+' km · '+uso;
+  var badge=g('rBadge');badge.textContent=pkg.l;badge.className='rbadge '+pkg.b;
+
+  var tags=g('rPkgTags');tags.innerHTML='';
+  pkg.itens.forEach(function(item){
+    var t=document.createElement('div');t.className='pkg-tag '+pkg.t;t.textContent='✓ '+item;tags.appendChild(t);
+  });
+
+  var priCfg={crit:{l:'Crítico',c:'crit',t:'tag-crit'},rec:{l:'Recomendado',c:'rec',t:'tag-rec'},opt:{l:'Opcional',c:'opt',t:'tag-opt'}};
+
+  function mkCard(nome,prio,tipo,motivo,intervalo,cls){
+    var p=priCfg[prio]||priCfg.rec;
+    var tipoL=tipo==='srv'?'Serviço':'Peça';
+    var tipoCls=tipo==='srv'?'tag-srv':'tag-peca';
+    var div=document.createElement('div');div.className='ri '+(cls||p.c);
+    div.innerHTML=
+      '<div class="ri-tags"><span class="tag '+p.t+'">'+p.l+'</span><span class="tag '+tipoCls+'">'+tipoL+'</span></div>'
+      +'<div><div class="rname">'+nome+'</div>'
+      +(motivo?'<div class="rmotivo">'+motivo+'</div>':'')
+      +(intervalo?'<div class="rint">⏱ '+intervalo+'</div>':'')+'</div>';
+    return div;
+  }
+
+  var rItens=g('rItens');rItens.innerHTML='';var cnt=0;
+  itensGerados.forEach(function(item,i){
+    if(estado['i'+i]!=='sim')return;
+    var det=detalhe['i'+i];
+    // Bateria aprovada — não incluir
+    if(det==='Bateria aprovada — não substituir')return;
+    // Montar nome final
+    var nomeF=item.nome;
+    if(det&&det.indexOf('Nenhum')<0)nomeF+=' — '+det;
+    rItens.appendChild(mkCard(nomeF,item.prio,item.tipo,item.motivo,item.intervalo));cnt++;
+  });
+  if(!cnt)rItens.innerHTML='<div class="vazio">Nenhum item adicional selecionado.</div>';
+
+  // Extras
+  var rExt=g('rExtras');rExt.innerHTML='';var extCnt=0;
+  for(var i=0;i<extraCnt;i++){
+    var nEl=g('exN'+i),tEl=g('exT'+i),pEl=g('exP'+i);
+    if(!nEl||!tEl||!pEl)continue;
+    var nm=nEl.value.trim();if(!nm)continue;
+    rExt.appendChild(mkCard(nm,pEl.value,tEl.value,'Adicionado pelo mecânico','','ext'));extCnt++;
+  }
+  g('rSecExt').style.display=extCnt?'block':'none';
+
+  var rGond=g('rGond');rGond.innerHTML='';var gcnt=0;
+  GONDOLA.forEach(function(item,i){
+    if(gondEstado['g'+i]!=='sim')return;
+    rGond.appendChild(mkCard(item.n,'rec',item.t,item.m,'','gon'));gcnt++;
+  });
+  if(!gcnt)rGond.innerHTML='<div class="vazio">Nenhum produto de gôndola selecionado.</div>';
+
+  g('rEl').className='rblock show';
+  g('rEl').scrollIntoView({behavior:'smooth',block:'start'});
+}
+
+// ── RESETAR ────────────────────────────────────────────────────────
+function resetar(){
+  g('rEl').className='rblock';g('e2El').className='etapa2';hideErr();
+  g('foundBox').className='found-box';g('notFoundBox').className='notfound-box';
+  g('iStock').value='';
+  ['iMarca','iModelo','iAno'].forEach(function(id){var e=g(id);e.value='';e.readOnly=false;e.style.borderColor='';});
+  g('iMotor').innerHTML='<option value="">Selecione marca e modelo primeiro...</option>';
+  g('iKm').value='';g('iComb').value='';
+  document.querySelectorAll('.chip').forEach(function(c){c.className='chip';});
+  g('pO').className='pkg';g('pP').className='pkg';g('pD').className='pkg';
+  usoSel='';pkgSel='';
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+</script>
+</body>
+</html>
