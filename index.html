@@ -410,7 +410,7 @@ function buscar(){
     g('iKm').value=r[3];
     setTimeout(function(){popMotores(r.m,r.mo,'');},50);
     g('foundTxt').textContent='✓ '+r.m+' '+r.mo+' '+r.a;
-    g('foundDet').textContent='Hub: '+(r[4]||'—')+' · '+parseInt(r[3]).toLocaleString('pt-BR')+' km · Stock: '+(r.p||q);
+    g('foundDet').textContent='Hub: '+(r[4]||'—')+' · '+parseInt(r[3]).toLocaleString('pt-BR')+' km · Stock: '+(r[6]||q);
     g('foundBox').className='found-box show';
   } else {
     g('notFoundBox').className='notfound-box show';
