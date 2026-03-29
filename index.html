@@ -401,7 +401,7 @@ function buscar(){
   g('foundBox').className='found-box';
   g('notFoundBox').className='notfound-box';
   if(!q)return;
-  if(typeof KDB==='undefined'){alert('Base de dados não carregada. Verifique o arquivo kavak_db.js.');return;}
+  if(typeof KDB==='undefined'){alert('Base de dados não carregada. Verifique o arquivo kavak_base.js.');return;}
   var r=KDB[q]||KDB[q.replace(/-/g,'')]||KDB[String(parseInt(q,10))];
   if(r){
     g('iMarca').value=r.m; g('iMarca').readOnly=true;
