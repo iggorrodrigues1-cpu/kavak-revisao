@@ -6592,19 +6592,27 @@ function preencherCheckinDoAgendamento(ag){
         }
       }
 
-      // 3. Ano — setar após recAtualizarAnos() popular o select
+      // 3. Ano — já populado por recAtualizarAnos() acima
       if(ag.ano && g('rkAnoSel')){
-        var selAno = g('rkAnoSel');
-        // Tentar setar direto
-        selAno.value = ag.ano;
-        // Se não funcionou (option não existe ainda), aguardar e tentar novamente
-        if(!selAno.value || selAno.value !== String(ag.ano)){
-          setTimeout(function(){
-            selAno.value = ag.ano;
-            if(selAno.value) recAtualizarMotores();
-          }, 300);
-        } else {
-          recAtualizarMotores();
+        g('rkAnoSel').value = String(ag.ano);
+        recAtualizarMotores();
+        // 4. Motor/versão — auto-selecionar se ag.modelo contiver a versão
+        if(ag.modelo){
+          var selMotor2 = g('rkMotor');
+          if(selMotor2 && selMotor2.options.length > 1){
+            // Tentar encontrar versão no texto do agendamento
+            var modeloNorm2 = normStr(ag.modelo);
+            var melhorMotor = '', melhorScoreM = 0;
+            for(var mi=0; mi<selMotor2.options.length; mi++){
+              var optM = selMotor2.options[mi];
+              if(!optM.value) continue;
+              var optMN = normStr(optM.value);
+              var scoreM = 0;
+              if(modeloNorm2.indexOf(optMN)>=0) scoreM = optMN.length;
+              if(scoreM > melhorScoreM){ melhorScoreM=scoreM; melhorMotor=optM.value; }
+            }
+            if(melhorMotor) selMotor2.value = melhorMotor;
+          }
         }
       }
     }
