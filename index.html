@@ -3462,7 +3462,7 @@ function carregarConsultor(){
 
 function carregarHistorico(){
   var all=getOS();
-  var hist=all.filter(function(o){return o.status==='aprovado'||o.status==='recusado'||o.status==='executado';});
+  var hist=all.filter(function(o){return o.status==='aprovado'||o.status==='recusado'||o.status==='executado'||o.status==='checklist_completo'||o.status==='concluido';});
   var lista=g('listaHistorico');lista.innerHTML='';
   if(!hist.length){lista.innerHTML='<div class="empty-state">Nenhuma proposta finalizada ainda.</div>';return;}
   hist.forEach(function(os){
@@ -3806,7 +3806,16 @@ function carregarDashboard(){
       // Usar valorMO salvo no aceite (mais preciso que recalcular)
       var moValor=item.valorMO!=null?item.valorMO:(parseFloat(item.hh)||0)*valorHH;
       // Custo original da peça (sem markup)
-      var precoBase=item.precoOriginal!=null?item.precoOriginal:(item.preco||0);
+      // precoOriginal = custo real; se não existir e OS tem markupPct, inferir
+      var precoBase;
+      if(item.precoOriginal!=null){
+        precoBase=item.precoOriginal;
+      } else if(os.markupPct && os.markupPct>0 && item.preco>0){
+        // Reverter markup: precoSemMarkup = precoComMarkup / (1 + markupPct/100)
+        precoBase=Math.round(item.preco/(1+os.markupPct/100)*100)/100;
+      } else {
+        precoBase=item.preco||0;
+      }
       if(item.tipo==='srv') recMO+=moValor;
       else if(item.tipo==='ambos'){recMO+=moValor; custoPecas+=precoBase;}
       else custoPecas+=precoBase; // peca, gnd
@@ -6583,11 +6592,20 @@ function preencherCheckinDoAgendamento(ag){
         }
       }
 
-      // 3. Ano
+      // 3. Ano — setar após recAtualizarAnos() popular o select
       if(ag.ano && g('rkAnoSel')){
-        g('rkAnoSel').value = ag.ano;
-      // Popular motores e auto-selecionar
-      recAtualizarMotores();
+        var selAno = g('rkAnoSel');
+        // Tentar setar direto
+        selAno.value = ag.ano;
+        // Se não funcionou (option não existe ainda), aguardar e tentar novamente
+        if(!selAno.value || selAno.value !== String(ag.ano)){
+          setTimeout(function(){
+            selAno.value = ag.ano;
+            if(selAno.value) recAtualizarMotores();
+          }, 300);
+        } else {
+          recAtualizarMotores();
+        }
       }
     }
 
