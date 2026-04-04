@@ -729,7 +729,7 @@ tr:hover td{background:rgba(255,255,255,.02);}
 <body>
 <div id="pgLogin" style="min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px;background:var(--dark);">
   <div style="background:var(--gray);border:1px solid var(--border);padding:36px;width:100%;max-width:420px;">
-    <div style="font-size:26px;font-weight:900;letter-spacing:6px;margin-bottom:4px;color:var(--text);">KAVAK</div>
+    <div style="font-size:26px;font-weight:900;letter-spacing:6px;margin-bottom:4px;color:var(--text);">KAVAK REVISÃO</div>
     <div style="font-size:10px;color:var(--muted);letter-spacing:2px;margin-bottom:28px;text-transform:uppercase;">Sistema de Revisão &amp; OS</div>
     <div style="display:flex;flex-direction:column;gap:5px;margin-bottom:12px;">
       <label style="font-size:10px;font-weight:700;letter-spacing:1.5px;color:var(--muted);text-transform:uppercase;">Unidade</label>
@@ -755,7 +755,7 @@ tr:hover td{background:rgba(255,255,255,.02);}
   </div>
 </div>
 <div id="navGlobal" class="nav-global">
-  <div class="nav-logo">KAVAK</div>
+  <div class="nav-logo">KAVAK REVISÃO</div>
   <div class="nav-tabs" id="navTabs"></div>
   <div class="nav-user"><span id="navNome"></span><span class="nav-sair" onclick="sair()">SAIR</span></div>
 </div>
@@ -6080,7 +6080,7 @@ function carregarAgendamentosHoje(){
       ags.forEach(function(a){if(a.hub)hubsHoje[a.hub]=(hubsHoje[a.hub]||0)+1;});
       linhas.push('--- Hubs dos '+ags.length+' agendamentos de hoje ---');
       Object.keys(hubsHoje).forEach(function(h){linhas.push('  '+hubsHoje[h]+'x: "'+h+'"');});
-      linhas.push('--- Filtro aplicado: "'+(hubFiltro||'nenhum')+'" ---');
+      linhas.push('--- Hub filtro: "'+(currentUser&&currentUser.unidade?currentUser.unidade.toLowerCase():'sem unidade')+'"');
       linhas.push('--- Últimas 10 linhas da planilha ---');
       recentes.slice(-10).forEach(function(r,i){
         var dt=r[c_.cData]||'';
@@ -6093,7 +6093,7 @@ function carregarAgendamentosHoje(){
     }
      // Renderizar lista via innerHTML direto
      var html='';
-     ags.forEach(function(ag){
+     try{ags.forEach(function(ag){
        var jaCi=ag.placa&&placasComCheckin.indexOf(ag.placa)>=0;
        var bg=jaCi?'rgba(0,200,83,.07)':'var(--mid)';
        var brd=jaCi?'rgba(0,200,83,.3)':'var(--border)';
@@ -6108,6 +6108,7 @@ function carregarAgendamentosHoje(){
          +'<div style="font-size:11px;color:var(--muted2);">'+(ag.tipo||'')+(ag.tipo&&ag.hub?' · ':'')+ag.hub+'</div></div>'
          +badge+'</div>';
      });
+     }catch(eRender){html='<div style="color:red;padding:10px;">Erro ao renderizar: '+eRender.message+'</div>';}
      wrap.innerHTML=html||'<div style="font-size:12px;color:var(--muted2);padding:10px 0;">Nenhum agendamento para hoje.</div>';
      // Bind click nos botões de check-in
      wrap.querySelectorAll('.ag-btn-ci').forEach(function(btn){
@@ -6124,8 +6125,15 @@ function carregarAgendamentosHoje(){
      });
    }
 
-   if(ggStatus()==='ok'){render();}
-   else{ggCarregarBase(function(){render();});}
+   // Flag global para evitar múltiplas renderizações simultâneas
+  if(window._agendaRendering) return;
+  window._agendaRendering = true;
+  function execRender(){
+    render();
+    setTimeout(function(){window._agendaRendering=false;}, 1000);
+  }
+  if(ggStatus()==='ok'){execRender();}
+  else{ggCarregarBase(function(){execRender();});}
 }
 
 // ══════════════════════════════════════════════════════════════════════
