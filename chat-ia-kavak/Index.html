@@ -105,11 +105,12 @@
     .modal .actions { display: flex; justify-content: flex-end; gap: 8px; }
     .modal .actions .cancel { background: #d5d8dd; color: #333; }
     .loading { font-size: 13px; color: var(--muted); font-style: italic; }
+    .sources { font-size: 11px; color: var(--muted); margin-top: 6px; }
   </style>
 </head>
 <body>
 
-  <header>Chat IA Cavalcante — Planilhas Kavak</header>
+  <header>Chat IA Kavak — Planilhas Corporativas</header>
 
   <div id="chat"></div>
 
@@ -134,13 +135,19 @@
     let lastQuestion = '';
     let lastAnswer = '';
 
-    function appendMessage(text, role) {
+    function appendMessage(text, role, sources) {
       const chat = document.getElementById('chat');
       const div = document.createElement('div');
       div.className = 'msg ' + role;
       div.innerHTML = role === 'ai' ? renderMarkdown(text) : escapeHtml(text);
 
       if (role === 'ai') {
+        if (sources && sources.length) {
+          const src = document.createElement('div');
+          src.className = 'sources';
+          src.textContent = 'Fontes consultadas: ' + sources.join(', ');
+          div.appendChild(src);
+        }
         const link = document.createElement('span');
         link.className = 'feedback-link';
         link.textContent = 'Corrigir essa resposta';
@@ -212,7 +219,7 @@
           loadingDiv.remove();
           document.getElementById('sendBtn').disabled = false;
           lastAnswer = result.answer;
-          appendMessage(result.answer, 'ai');
+          appendMessage(result.answer, 'ai', result.fontesConsultadas);
         })
         .withFailureHandler(function (err) {
           loadingDiv.remove();
