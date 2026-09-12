@@ -6,6 +6,13 @@ corporativo da Kavak, roteando cada pergunta para apenas as fontes relevantes
 correções dos usuários. Roda inteiramente dentro do Google Workspace
 (Apps Script + Google Sheets), sem depender de nenhuma infraestrutura externa.
 
+A interface (`Index.html`) segue o **Kavak Brand Playbook 2025**: header em Kavak
+Blue (`#0467FC`) com logo branco, fundo padrão branco, bolhas de conversa em Kavak
+Blue (usuário) e card fill claro `#EBF1FF` (IA), tipografia Kavak Telegraf nos
+títulos e Helvetica Neue no corpo, e footer com logo azul + "Interno · Kavak".
+Logos e fontes estão embutidos em base64 diretamente no HTML (não há hospedagem
+externa de assets, compatível com o Apps Script HtmlService).
+
 ## 1. Visão geral da arquitetura
 
 ```
